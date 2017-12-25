@@ -13,7 +13,7 @@ public class Game extends Activity {
         Display display = getWindowManager().getDefaultDisplay();
         Point dims = new Point();
         display.getSize(dims);
-        gameView = new GameView(this, dims);
+        gameView = new GameView(this, dims.x, dims.y);
         setContentView(gameView);
     }
     @Override

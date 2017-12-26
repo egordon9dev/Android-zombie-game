@@ -10,7 +10,7 @@
     android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
     <TextView
         android:id="@+id/titleText"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="95sp"
         android:text="Siege"
@@ -20,7 +20,7 @@
         />
     <Button
         android:id="@+id/playBut"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="30sp"
         android:text="Play"

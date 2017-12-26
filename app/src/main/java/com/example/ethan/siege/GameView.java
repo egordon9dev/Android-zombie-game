@@ -10,6 +10,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class GameView extends SurfaceView implements Runnable {
     private float width, height;
     private Canvas canvas;
@@ -17,14 +19,15 @@ public class GameView extends SurfaceView implements Runnable {
     private SurfaceHolder surfaceHolder;
     private Paint paint;
     private Thread thread;
-    private Player player;
+    public Player player;
     private Map map;
+    private ArrayList<Bullet> bullets;
+    private ArrayList<Zombie> zombies;
     private boolean running;
     private long prevT, prevUpdateT, totalDeltaTime;
-    private float playerSpeed = 2.0f;
     private Rect cam;
-    float px, py;
-
+    private float px, py, joyX0, joyY0;
+    private int activePtrId = -1;
     public GameView(Context ctx, float w, float h) {
         super(ctx);
         width = w;
@@ -35,8 +38,10 @@ public class GameView extends SurfaceView implements Runnable {
         running = true;
         prevT = 0;
         prevUpdateT = 0;
-        px = 0;
-        py = 0;
+        joyX0 = width - 300;
+        joyY0 = height - 500;
+        px = joyX0;
+        py = joyY0;
         startGame();
     }
 
@@ -56,8 +61,46 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     public void update() {
-        //player.update();
-        updatePlayer();
+        player.update(map.getTiles());
+        for(int i = bullets.size()-1; i >= 0; i--) {
+            if(!bullets.get(i).update(map, cam)) bullets.remove(i);
+        }
+        while(zombies.size() < Zombie.nZombies) {
+            float zx, zy;
+            Tile[][] tiles = map.getTiles();
+            float sc = map.getSc();
+            Tile t0 = tiles[0][0];
+            outer:
+            while (true) {
+                float randX = (float) Math.random() * cam.w * 0.5f - cam.w * 0.25f;
+                float randY = (float) Math.random() * cam.h * 0.5f - cam.h * 0.25f;
+                zx = cam.x + (randX >= 0.0f ? randX : cam.w + randX);
+                zy = cam.y + (randY >= 0.0f ? randY : cam.h + randY);
+                map.update(cam.x, cam.y);
+                int top = (int) ((zy - Zombie.radius - tiles[0][0].y) / sc);
+                if(top < 0) top = 0;
+                int bottom = (int) ((zy + Zombie.radius - tiles[0][0].y) / sc);
+                if(bottom > tiles.length - 1) bottom = tiles.length - 1;
+                int left = (int) ((zx - Zombie.radius - tiles[0][0].x) / sc);
+                if(left < 0) left = 0;
+                int right = (int) ((zx + Zombie.radius - tiles[0][0].x) / sc);
+                if(right > tiles[0].length - 1) right = tiles[0].length - 1;
+                Circle zd = new Circle(zx, zy, Zombie.radius);
+                for (int y = top; y <= bottom; y++) {
+                    for (int x = left; x <= right; x++) {
+                        if (checkCol(tiles[y][x], zd)) {
+                            continue outer;
+                        }
+                    }
+                }
+                break;
+            }
+            zombies.add(new Zombie(zx, zy));
+        }
+        Circle leaderDims = zombies.get(0).getDims();
+        for (int i = zombies.size() - 1; i >= 0; i--) {
+            if(!zombies.get(i).update(map.getTiles(), zombies, player, new Point(leaderDims.x, leaderDims.y), cam)) zombies.remove(i);
+        }
         long dt = System.currentTimeMillis() - prevUpdateT;
         float a = dt * 0.02f;
         if (a > 1.0f) a = 1.0f;
@@ -67,47 +110,7 @@ public class GameView extends SurfaceView implements Runnable {
         cam.y = cam.y * (1.0f - a) + (pd.y - height / 2) * a;
         map.update(cam.x, cam.y);
     }
-
-    public void updatePlayer() {
-        Point vel = player.getVel();
-        Circle pd = player.getDims();
-        Tile tiles[][] = map.getTiles();
-        float sc = map.getSc();
-
-        float substep_approx = 3.0f;
-        int stepsX = Math.abs((int) (vel.x / substep_approx + 0.5));
-        if (stepsX == 0) stepsX = 1;
-        float substepX = vel.x / stepsX;
-        for (int i = 0; i < stepsX; i++) {
-            pd.x += substepX;
-            outer1:
-            for (int y = (int) ((pd.y - pd.r - tiles[0][0].y) / sc); y <= (int) ((pd.y + pd.r - tiles[0][0].y) / sc); y++) {
-                for (int x = (int) ((pd.x - pd.r - tiles[0][0].x) / sc); x <= (int) ((pd.x + pd.r - tiles[0][0].x) / sc); x++) {
-                    if (checkCol(tiles[y][x], pd)) {
-                        pd.x -= substepX;
-                        break outer1;
-                    }
-                }
-            }
-        }
-        int stepsY = Math.abs((int) (vel.y / substep_approx + 0.5));
-        if (stepsY == 0) stepsY = 1;
-        float substepY = vel.y / stepsY;
-        for (int i = 0; i < stepsY; i++) {
-            pd.y += substepY;
-            outer2:
-            for (int y = (int) ((pd.y - pd.r - tiles[0][0].y) / sc); y <= (int) ((pd.y + pd.r - tiles[0][0].y) / sc); y++) {
-                for (int x = (int) ((pd.x - pd.r - tiles[0][0].x) / sc); x <= (int) ((pd.x + pd.r - tiles[0][0].x) / sc); x++) {
-                    if (checkCol(tiles[y][x], pd)) {
-                        pd.y -= substepY;
-                        break outer2;
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean checkCol(Tile t, Circle c) {
+    public static boolean checkCol(Tile t, Circle c) {
         float left = t.x - c.x;
         float right = c.x - (t.x + t.sc);
         float top = t.y - c.y;
@@ -130,20 +133,24 @@ public class GameView extends SurfaceView implements Runnable {
 
                     map.draw(canvas, paint, context, cam);
 
+                    for(int i = 0; i < bullets.size(); i++) {
+                        bullets.get(i).draw(canvas, paint, context, cam);
+                    }
+                    for(int i = 0; i < zombies.size(); i++) {
+                        zombies.get(i).draw(canvas, paint, context, cam);
+                    }
+
                     Circle playerDims = player.getDims();
-                    paint.setColor(Color.argb(150, 255, 0, 0));
-                    canvas.drawLine(playerDims.x - cam.x, playerDims.y - cam.y, px, py, paint);
                     player.draw(canvas, paint, context, cam);
 
-                    paint.setColor(Color.WHITE);
-                    canvas.drawLine(0, 0, width, 0, paint);
-                    canvas.drawLine(width, 0, width, height, paint);
-                    canvas.drawLine(width, height, 0, height, paint);
-                    canvas.drawLine(0, height, 0, 0, paint);
+                    paint.setColor(0x40FFFFFF);
+                    canvas.drawCircle(joyX0, joyY0, 240, paint);
+                    paint.setColor(ContextCompat.getColor(context, R.color.dark_blue) & 0x70FFFFFF);
+                    canvas.drawCircle(px, py, 120, paint);
 
+                    paint.setColor(Color.WHITE);
                     paint.setTextSize(50);
-                    canvas.drawText("player: ( " + Float.toString(playerDims.x) + ", " + Float.toString(playerDims.y) + " )", 50, 70, paint);
-                    canvas.drawText("fps: " + Double.toString(1000.0 / totalDeltaTime), 50, 140, paint);
+                    canvas.drawText("fps: " + Float.toString(1000.0f / totalDeltaTime), 50, 70, paint);
                     surfaceHolder.unlockCanvasAndPost(canvas);
                 } else {
                     Toast.makeText(context, "null canvas", Toast.LENGTH_LONG).show();
@@ -177,59 +184,65 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    private void spawnPlayer() {
-        Circle pd = player.getDims();
-        Tile tiles[][] = map.getTiles();
-        float sc = map.getSc();
-        outer:
-        while (true) {
-            pd.x = (float) Math.random() * width;
-            pd.y = (float) Math.random() * height;
-            cam.x = pd.x - width / 2;
-            cam.y = pd.y - height / 2;
-            map.update(cam.x, cam.y);
-            for (int y = (int) ((pd.y - pd.r - tiles[0][0].y) / sc); y <= (int) ((pd.y + pd.r - tiles[0][0].y) / sc); y++) {
-                for (int x = (int) ((pd.x - pd.r - tiles[0][0].x) / sc); x <= (int) ((pd.x + pd.r - tiles[0][0].x) / sc); x++) {
-                    if (checkCol(tiles[y][x], pd)) {
-                        continue outer;
-                    }
-                }
-            }
-            break;
-        }
-    }
-
     private void startGame() {
         player = new Player();
         Circle pd = player.getDims();
         cam = new Rect(pd.x - width / 2, pd.y - height / 2, width, height);
         map = new Map(width, height, 150.0f, 555);
-        //map.update(cam.x, cam.y);
-        spawnPlayer();
+        bullets = new ArrayList<Bullet>();
+        zombies = new ArrayList<Zombie>();
+        player.respawn(map, cam);
+    }
+
+    public void playerShoot() {
+        Circle pd = player.getDims();
+        Point dir = player.getDir();
+        bullets.add(new Bullet(pd.x, pd.y, 10, dir.x * Bullet.speed, dir.y * Bullet.speed, player.getCharged() ? 2 : 1));
+        player.setCharged(false);
+        player.setChargeT0(Long.MAX_VALUE);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-        px = x;
-        py = y;
-        float dx = px + cam.x - player.getDims().x;
-        float dy = py + cam.y - player.getDims().y;
-        float mag = (float) Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-        if (Math.abs(mag) > 5.0) {
-            player.setXV((dx * playerSpeed) / mag);
-            player.setYV((dy * playerSpeed) / mag);
-        }
+        final int action = event.getAction();
+        final int nPtrs = event.getPointerCount();
 
-        switch (event.getAction()) {
+        final int index = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+        final int id = event.getPointerId(index);
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
-                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_MOVE:
+                for (int i = 0; i < nPtrs; i++) {
+                    float x = event.getX(i);
+                    float y = event.getY(i);
+                    float dx = x - joyX0;
+                    float dy = y - joyY0;
+
+                    float mag = (float) Math.sqrt(dx * dx + dy * dy);
+                    if (mag < 500) {
+                        px = x;
+                        py = y;
+                        if (mag > 240) {
+                            px = joyX0 + dx * (240 / mag);
+                            py = joyY0 + dy * (240 / mag);
+                        }
+                        if (Math.abs(mag) > 3.0) {
+                            player.setXV((dx * Player.speed) / mag);
+                            player.setYV((dy * Player.speed) / mag);
+                            activePtrId = id;
+                        }
+                    }
+                }
                 break;
             case MotionEvent.ACTION_UP:
-                player.setXV(0);
-                player.setYV(0);
+            case MotionEvent.ACTION_POINTER_UP:
+                if(activePtrId == id) {
+                    px = joyX0;
+                    py = joyY0;
+                    player.setXV(0);
+                    player.setYV(0);
+                }
                 break;
         }
         return true;

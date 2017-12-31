@@ -45,6 +45,8 @@ public class Game extends Activity {
         butShoot.setBackgroundColor(ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF);
         butShoot.setTextColor(ContextCompat.getColor(this, R.color.light_blue) & 0xAAFFFFFF);
         butShoot.setId(1001);
+        gameView.player.setMoving(true);
+        /*
         Button butMove = new Button(this);
         butMove.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -67,20 +69,20 @@ public class Game extends Activity {
         butMove.setPadding(30, 30, 30, 30);
         butMove.setTextSize(35);
         butMove.setBackgroundColor(ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF);
-        butMove.setTextColor(ContextCompat.getColor(this, R.color.light_blue) & 0xAAFFFFFF);
-
+        butMove.setTextColor(ContextCompat.getColor(this, R.color.light_blue) & 0xAAFFFFFF);*/
+        
         RelativeLayout layout = new RelativeLayout(this);
         layout.setPadding(100, 100, 100, 100);
         RelativeLayout.LayoutParams lpButShoot = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         lpButShoot.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-        lpButShoot.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+        lpButShoot.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);/*
         RelativeLayout.LayoutParams lpButMove = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         lpButMove.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
         lpButMove.addRule(RelativeLayout.ABOVE, 1001);
-        lpButMove.setMargins(0, 0, 0, 10);
+        lpButMove.setMargins(0, 0, 0, 10);*/
         RelativeLayout.LayoutParams lpLayout = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         layout.addView(butShoot, lpButShoot);
-        layout.addView(butMove, lpButMove);
+        //layout.addView(butMove, lpButMove);
         frameLayout.addView(gameView);
         frameLayout.addView(layout, lpLayout);
         setContentView(frameLayout);

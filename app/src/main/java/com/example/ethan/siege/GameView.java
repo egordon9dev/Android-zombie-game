@@ -28,6 +28,9 @@ public class GameView extends SurfaceView implements Runnable {
     private Rect cam;
     private float px, py, joyX0, joyY0;
     private int activePtrId = -1;
+    private JPS jps;
+    // map scale / node space
+    public static final int nsFac = 1;
     public GameView(Context ctx, float w, float h) {
         super(ctx);
         width = w;
@@ -68,22 +71,19 @@ public class GameView extends SurfaceView implements Runnable {
         while(zombies.size() < Zombie.nZombies) {
             float zx, zy;
             Tile[][] tiles = map.getTiles();
-            float sc = map.getSc();
             Tile t0 = tiles[0][0];
             outer:
             while (true) {
-                float randX = (float) Math.random() * cam.w * 0.5f - cam.w * 0.25f;
-                float randY = (float) Math.random() * cam.h * 0.5f - cam.h * 0.25f;
-                zx = cam.x + (randX >= 0.0f ? randX : cam.w + randX);
-                zy = cam.y + (randY >= 0.0f ? randY : cam.h + randY);
+                zx = (float) Math.random() * cam.w + cam.x;
+                zy = (float) Math.random() * cam.h + cam.y;
                 map.update(cam.x, cam.y);
-                int top = (int) ((zy - Zombie.radius - tiles[0][0].y) / sc);
+                int top = (int) ((zy - Zombie.radius - tiles[0][0].y) / Map.sc);
                 if(top < 0) top = 0;
-                int bottom = (int) ((zy + Zombie.radius - tiles[0][0].y) / sc);
+                int bottom = (int) ((zy + Zombie.radius - tiles[0][0].y) / Map.sc);
                 if(bottom > tiles.length - 1) bottom = tiles.length - 1;
-                int left = (int) ((zx - Zombie.radius - tiles[0][0].x) / sc);
+                int left = (int) ((zx - Zombie.radius - tiles[0][0].x) / Map.sc);
                 if(left < 0) left = 0;
-                int right = (int) ((zx + Zombie.radius - tiles[0][0].x) / sc);
+                int right = (int) ((zx + Zombie.radius - tiles[0][0].x) / Map.sc);
                 if(right > tiles[0].length - 1) right = tiles[0].length - 1;
                 Circle zd = new Circle(zx, zy, Zombie.radius);
                 for (int y = top; y <= bottom; y++) {
@@ -95,11 +95,10 @@ public class GameView extends SurfaceView implements Runnable {
                 }
                 break;
             }
-            zombies.add(new Zombie(zx, zy));
+            zombies.add(new Zombie(zx, zy, jps));
         }
-        Circle leaderDims = zombies.get(0).getDims();
         for (int i = zombies.size() - 1; i >= 0; i--) {
-            if(!zombies.get(i).update(map.getTiles(), zombies, player, new Point(leaderDims.x, leaderDims.y), cam)) zombies.remove(i);
+            if(!zombies.get(i).update(map.getTiles(), zombies, player, cam)) zombies.remove(i);
         }
         long dt = System.currentTimeMillis() - prevUpdateT;
         float a = dt * 0.02f;
@@ -137,12 +136,9 @@ public class GameView extends SurfaceView implements Runnable {
                         bullets.get(i).draw(canvas, paint, context, cam);
                     }
                     for(int i = 0; i < zombies.size(); i++) {
-                        zombies.get(i).draw(canvas, paint, context, cam);
+                        zombies.get(i).draw(canvas, paint, context, cam, map);
                     }
-
-                    Circle playerDims = player.getDims();
                     player.draw(canvas, paint, context, cam);
-
                     paint.setColor(0x40FFFFFF);
                     canvas.drawCircle(joyX0, joyY0, 240, paint);
                     paint.setColor(ContextCompat.getColor(context, R.color.dark_blue) & 0x70FFFFFF);
@@ -188,7 +184,9 @@ public class GameView extends SurfaceView implements Runnable {
         player = new Player();
         Circle pd = player.getDims();
         cam = new Rect(pd.x - width / 2, pd.y - height / 2, width, height);
-        map = new Map(width, height, 150.0f, 555);
+        map = new Map(width, height, 555);
+        Tile tiles[][] = map.getTiles();
+        jps = new JPS(tiles[0].length*nsFac, tiles.length*nsFac, (int)(Map.sc/nsFac));
         bullets = new ArrayList<Bullet>();
         zombies = new ArrayList<Zombie>();
         player.respawn(map, cam);

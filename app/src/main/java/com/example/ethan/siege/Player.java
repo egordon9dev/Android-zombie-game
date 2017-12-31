@@ -31,7 +31,7 @@ public class Player {
     }
 
     public void update(Tile[][] tiles) {
-        if(System.currentTimeMillis() - chargeT0 > 1000) {
+        if(System.currentTimeMillis() - chargeT0 > 100) {
             charged = true;
         }
 
@@ -113,7 +113,7 @@ public class Player {
 
     public void respawn(Map map, Rect cam) {
         Tile tiles[][] = map.getTiles();
-        float sc = map.getSc();
+        float sc = map.sc;
         outer:
         while (true) {
             dims.x = (float) Math.random() * cam.w;

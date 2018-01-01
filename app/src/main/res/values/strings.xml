@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Siege</string>
     <string name="my_msg">this is a message</string>
+    <string name="score"><u>SCORE</u></string>
+    <string-array name="ctrlOps">
+        <item>Joystick</item>
+        <item>Tap Anywhere</item>
+    </string-array>
+    <string name="ctrlOpsPrompt">Choose a Control Mode</string>
 </resources>

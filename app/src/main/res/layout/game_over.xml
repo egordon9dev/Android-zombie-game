@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:background="#40FF0000">
+    <TextView
+        android:id="@+id/gameOver"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="50dp"
+        android:textStyle="bold"
+        android:layout_marginBottom="30dp"
+        android:textColor="#FFFFFFFF"
+        android:text="Game Over">
+    </TextView>
+    <ImageButton
+        android:id="@+id/home"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_blue"
+        android:alpha="0.8"
+        android:padding="10dp"
+        android:layout_marginRight="20dp"
+        android:layout_below="@id/gameOver"
+        android:src="@mipmap/home75"
+        android:onClick="goHome"
+        />
+    <ImageButton
+        android:id="@+id/arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_blue"
+        android:alpha="0.8"
+        android:padding="10dp"
+        android:src="@mipmap/arrow75"
+        android:layout_below="@id/gameOver"
+        android:layout_toRightOf="@id/home"
+        android:onClick="restartGame"
+        />
+</RelativeLayout>

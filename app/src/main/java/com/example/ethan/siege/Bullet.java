@@ -24,6 +24,7 @@ public class Bullet {
         this.power = power;
     }
     public boolean update(Map map, Rect cam) {
+        System.out.println("bullet update");
         Tile[][] tiles = map.getTiles();
         final long dt = System.currentTimeMillis() - prevT;
         prevT = System.currentTimeMillis();

@@ -17,10 +17,13 @@ public class Player {
     private Point dir;
     private boolean charged;
     private long chargeT0;
-    public static final float speed = 1.3f;
+    public static final float speed = 0.9f;
     private boolean moving;
+    private int pts, ptsPerKill;
+    public static final float regenRate = 0.003f;
+    private float health, maxHealth;
 
-    public Player() {
+    public Player(float maxHealth) {
         dims = new Circle(150.0f, 150.0f, 90.0f);
         xv = 0.0f;
         yv = 0.0f;
@@ -28,6 +31,10 @@ public class Player {
         charged = true;
         chargeT0 = 0;
         moving = false;
+        pts = 0;
+        ptsPerKill = 1;
+        this.maxHealth = maxHealth;
+        health = maxHealth;
     }
 
     public void update(Tile[][] tiles) {
@@ -42,6 +49,8 @@ public class Player {
         if (dt > 1000) {
             vel = new Point(0, 0);
         } else {
+            health += regenRate * dt;
+            if(health > maxHealth) health = maxHealth;
             vel = new Point(xv * dt, yv * dt);
             double mag = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
             if (Math.abs(mag) > 0.001) {
@@ -140,6 +149,12 @@ public class Player {
             break;
         }
     }
+    public float getMaxHealth() { return maxHealth; }
+    public float getHealth() { return health; }
+    public void setHealth(float health) { this.health = health; }
+    public int getPtsPerKill() { return ptsPerKill; }
+    public void setPts(int pts) { this.pts = pts; }
+    public int getPts() { return pts; }
     public void setMoving(boolean b) { moving = b; }
     public boolean getCharged() { return charged; }
     public void setCharged(boolean b) { charged = b; }

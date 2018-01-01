@@ -4,5 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.ethan.siege.Game"
-    android:background="#444">
+    android:background="#444"
+    >
 </RelativeLayout>

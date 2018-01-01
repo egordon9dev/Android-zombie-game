@@ -1,23 +1,34 @@
 package com.example.ethan.siege;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 
 public class Game extends Activity {
     private GameView gameView;
+    private Point dims;
+    public static PopupWindow window;
+    public static View inflatedView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Display display = getWindowManager().getDefaultDisplay();
-        Point dims = new Point();
+        dims = new Point();
         display.getSize(dims);
         FrameLayout frameLayout = new FrameLayout(this);
         gameView = new GameView(this, dims.x, dims.y);
@@ -42,10 +53,10 @@ public class Game extends Activity {
         butShoot.setText("Shoot");
         butShoot.setPadding(30, 30, 30, 30);
         butShoot.setTextSize(35);
-        butShoot.setBackgroundColor(ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF);
+        int transparentBlue = ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF;
+        butShoot.setBackgroundColor(transparentBlue);
         butShoot.setTextColor(ContextCompat.getColor(this, R.color.light_blue) & 0xAAFFFFFF);
         butShoot.setId(1001);
-        gameView.player.setMoving(true);
         /*
         Button butMove = new Button(this);
         butMove.setOnTouchListener(new View.OnTouchListener() {
@@ -70,19 +81,37 @@ public class Game extends Activity {
         butMove.setTextSize(35);
         butMove.setBackgroundColor(ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF);
         butMove.setTextColor(ContextCompat.getColor(this, R.color.light_blue) & 0xAAFFFFFF);*/
-        
+        ImageButton butPause = new ImageButton(this);
+        butPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goPaused(view);
+            }
+        });
+        butPause.setPadding(0, 0, 0, 0);
+        butPause.setBackgroundColor(transparentBlue);
+        Drawable drawable = ContextCompat.getDrawable(this, R.drawable.pause);
+        Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
+        Bitmap bitmapResized = bitmap.createScaledBitmap(bitmap, 160, 160, false);
+        butPause.setImageDrawable(new BitmapDrawable(this.getResources(), bitmapResized));
+
         RelativeLayout layout = new RelativeLayout(this);
-        layout.setPadding(100, 100, 100, 100);
+        layout.setPadding(30, 30, 30, 30);
         RelativeLayout.LayoutParams lpButShoot = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         lpButShoot.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-        lpButShoot.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);/*
-        RelativeLayout.LayoutParams lpButMove = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        lpButMove.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        lpButMove.addRule(RelativeLayout.ABOVE, 1001);
-        lpButMove.setMargins(0, 0, 0, 10);*/
-        RelativeLayout.LayoutParams lpLayout = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        lpButShoot.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+        RelativeLayout.LayoutParams lpButPause = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        lpButPause.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+        lpButPause.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        RelativeLayout.LayoutParams lpLayout = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
         layout.addView(butShoot, lpButShoot);
-        //layout.addView(butMove, lpButMove);
+        layout.addView(butPause, lpButPause);
+        layout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return false;
+            }
+        });
         frameLayout.addView(gameView);
         frameLayout.addView(layout, lpLayout);
         setContentView(frameLayout);
@@ -96,5 +125,24 @@ public class Game extends Activity {
     protected void onPause() {
         super.onPause();
         gameView.pause();
+    }
+    public void restartGame(View view) {
+        gameView.restartGame();
+    }
+    public void resumeGame(View view) { gameView.resumeGame(); }
+    public void goHome(View view) {
+        gameView.goHome();
+    }
+    public void goSettings(View view) { gameView.goSettings(); }
+    public void goPaused(View view) {
+        if(window != null) window.dismiss();
+        gameView.setPaused(true);
+        inflatedView = getLayoutInflater().inflate(R.layout.paused, null);
+        window = new PopupWindow(inflatedView, RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT, true);
+        Drawable drawable = new ColorDrawable(Color.BLACK);
+        drawable.setBounds(0, 0, window.getWidth(), window.getHeight());
+        drawable.setAlpha(180);
+        window.setBackgroundDrawable(drawable);
+        window.showAtLocation(gameView, Gravity.NO_GRAVITY, 0, 0);
     }
 }

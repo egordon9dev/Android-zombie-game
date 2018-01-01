@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 
 public class Map {
-    private Tile tiles[][];
+    private final Tile tiles[][];
     public static final float sc = 150.0f;
     SimplexNoise noise;
     private ArrayList<Point> brokenWalls;

@@ -12,8 +12,9 @@ public class Zombie {
     private Circle dims;
     private float xv, yv;
     private long prevT;
-    public static final float speed = 0.8f;
-    public static final int nZombies = 100;
+    public static final float avgSpeed = 0.3f;
+    public final float speed;
+    public static final int nZombies = 10;
     public static final float radius = 40.0f;
     private static long idCount = 0;
     public final long id = idCount;
@@ -22,11 +23,15 @@ public class Zombie {
     ArrayList<Node> path;
     private static final boolean debugPath = false;
     private SimplexNoise noise;
-    private Zombie(){}
-    public Zombie(float x, float y, JPS jps) {
+    private float dmg;
+
+    public float getDmg() { return dmg; }
+    public Zombie(float x, float y, float dmg, JPS jps) {
         dims = new Circle(x, y, Zombie.radius);
+        speed = avgSpeed * (float)(0.5 + Math.random());
         this.xv = 0.0f;
         this.yv = 0.0f;
+        this.dmg = dmg;
         this.jps = jps;
         prevT = 0;
         idCount++;
@@ -130,14 +135,20 @@ public class Zombie {
         path = jps.findPath(startX, startY, endX, endY);
         Point vel;
         float dx, dy, mag;
-        if(path != null && path.size() > 1) {
+        float noiseX = (float)noise.getNoise(0, (int)System.currentTimeMillis()*10);
+        float noiseY = (float)noise.getNoise(99999, (int)System.currentTimeMillis()*10);
+        dx = (pd.x - dims.x) * (noiseX/2.0f + 1.0f) + noiseX*400;
+        dy = (pd.y - dims.y) * (noiseY/2.0f + 1.0f) + noiseY*400;
+        mag = (float)Math.sqrt(dx*dx + dy*dy);
+        if(mag <= pd.r + dims.r + Map.sc/2) {
+            float scale = (speed/mag) * dt;
+            vel = new Point(dx * scale, dy * scale);
+        } else if(path != null && path.size() > 1) {
             Node aim1 = path.get(path.size()-1); // source
             Node aim2 = path.get(path.size()-2); // destination
             int ns = jps.getNodeSpace();
-            float noiseX = (float)noise.getNoise(0, (int)System.currentTimeMillis());
-            float noiseY = (float)noise.getNoise(99999, (int)System.currentTimeMillis());
-            dx = (float)(aim2.x + ns/2 + t00.x - dims.x) * (noiseX/2.0f + 1.0f) + noiseX*50;
-            dy = (float)(aim2.y + ns/2 + t00.y - dims.y) * (noiseY/2.0f + 1.0f) + noiseY*50;
+            dx = (float)(aim2.x + ns/2 + t00.x - dims.x) * (noiseX/2.0f + 1.0f) + noiseX*400;
+            dy = (float)(aim2.y + ns/2 + t00.y - dims.y) * (noiseY/2.0f + 1.0f) + noiseY*400;
             float scale = (speed / (float)Math.sqrt(dx*dx + dy*dy)) * dt;
             vel = new Point(dx*scale, dy*scale);
         } else {
@@ -216,6 +227,12 @@ public class Zombie {
         mag = (float)Math.sqrt(dx*dx + dy*dy);
         if(mag <= pd.r + dims.r) {
             dims.y -= vel.y;
+        }
+        dx = pd.x - dims.x;
+        dy = pd.y - dims.y;
+        mag = (float)Math.sqrt(dx*dx + dy*dy);
+        if(mag < pd.r+dims.r + Map.sc/10) {
+            player.setHealth(player.getHealth() - (int)(dmg*dt));
         }
         /*  BUGGY: zombies can be pushed into walls
         Circle pd = player.getDims();

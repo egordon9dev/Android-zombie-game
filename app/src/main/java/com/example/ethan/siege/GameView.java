@@ -23,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 public class GameView extends SurfaceView implements Runnable {
@@ -80,34 +81,65 @@ public class GameView extends SurfaceView implements Runnable {
 
     public void update() {
         player.update(map.getTiles());
-        while(zombies.size() < Zombie.nZombies) {
-            float zx, zy;
-            Tile[][] tiles = map.getTiles();
-            Tile t0 = tiles[0][0];
-            outer:
-            while (true) {
-                zx = (float) Math.random() * cam.w + cam.x;
-                zy = (float) Math.random() * cam.h + cam.y;
-                map.update(cam.x, cam.y);
-                int top = (int) ((zy - Zombie.radius - tiles[0][0].y) / Map.sc);
-                if(top < 0) top = 0;
-                int bottom = (int) ((zy + Zombie.radius - tiles[0][0].y) / Map.sc);
-                if(bottom > tiles.length - 1) bottom = tiles.length - 1;
-                int left = (int) ((zx - Zombie.radius - tiles[0][0].x) / Map.sc);
-                if(left < 0) left = 0;
-                int right = (int) ((zx + Zombie.radius - tiles[0][0].x) / Map.sc);
-                if(right > tiles[0].length - 1) right = tiles[0].length - 1;
-                Circle zd = new Circle(zx, zy, Zombie.radius);
-                for (int y = top; y <= bottom; y++) {
-                    for (int x = left; x <= right; x++) {
-                        if (checkCol(tiles[y][x], zd)) {
-                            continue outer;
+        Tile[][] tiles = map.getTiles();
+        Point dir = player.getDir();
+        ArrayDeque<Long> killT = Zombie.getKillTimes();
+        int x0, y0, x1, y1;
+        boolean xDom = false;
+        if (Math.abs(dir.x) > Math.abs(dir.y)) {
+            xDom = true;
+            y0 = 1;
+            y1 = tiles.length - 1;
+            if (dir.x < 0) {
+                x0 = 2 * tiles[0].length / 3;
+                x1 = tiles[0].length - 1;
+            } else {
+                x0 = 1;
+                x1 = tiles[0].length / 3;
+            }
+        } else {
+            x0 = 1;
+            x1 = tiles[0].length - 1;
+            if (dir.y < 0) {
+                y0 = 2 * tiles.length / 3;
+                y1 = tiles.length - 1;
+            } else {
+                y0 = 1;
+                y1 = tiles.length / 3;
+            }
+        }
+        int i = 0, spawnW = x1-x0, spawnH = y1-y0;
+        while(Zombie.nZombies > zombies.size() + killT.size() || (killT.size() > 0 && System.currentTimeMillis() - killT.getFirst().longValue() > Zombie.getKillWait())) {
+
+            float zx = 0f, zy = 0f;
+            if(xDom) {
+                outer:
+                for (int x = x0 + i / spawnH; x < x1; x++) {
+                    for (int y = y0 + i % spawnH; y < y1; y++) {
+                        Tile t = tiles[y][x];
+                        if (t.type == Tile_t.open) {
+                            zx = t.x + t.sc / 2;
+                            zy = t.y + t.sc / 2;
+                            break outer;
                         }
                     }
                 }
-                break;
+            } else {
+                outer:
+                for (int y = y0 + i / spawnW; y < y1; y++) {
+                    for (int x = x0 + i % spawnW; x < x1; x++) {
+                        Tile t = tiles[y][x];
+                        if (t.type == Tile_t.open) {
+                            zx = t.x + t.sc / 2;
+                            zy = t.y + t.sc / 2;
+                            break outer;
+                        }
+                    }
+                }
             }
+            if((killT.size() > 0 && System.currentTimeMillis() - killT.getFirst().longValue() > Zombie.getKillWait())) killT.removeFirst();
             zombies.add(new Zombie(zx, zy, 0.2f, jps));
+            i++;
         }
         for(int b = bullets.size() - 1; b >= 0; b--) {
             if (!bullets.get(b).update(map, cam)) {
@@ -130,6 +162,7 @@ public class GameView extends SurfaceView implements Runnable {
                 if(Math.sqrt(dx*dx+dy*dy) < bd.r+zd.r) {
                     bullets.remove(b);
                     zombies.remove(z);
+                    killT.addLast(System.currentTimeMillis());
                     player.setPts(player.getPts() + player.getPtsPerKill());
                 }
             }
@@ -315,6 +348,7 @@ public class GameView extends SurfaceView implements Runnable {
         bullets = new ArrayList<Bullet>();
         zombies = new ArrayList<Zombie>();
         player.respawn(map, cam);
+        ArrayDeque<Long> killT = Zombie.getKillTimes();
     }
 
     public void playerShoot() {

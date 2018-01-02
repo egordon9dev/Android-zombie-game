@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.v4.content.ContextCompat;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 public class Zombie {
@@ -14,7 +15,7 @@ public class Zombie {
     private long prevT;
     public static final float avgSpeed = 0.3f;
     public final float speed;
-    public static final int nZombies = 10;
+    public static final int nZombies = 30;
     public static final float radius = 40.0f;
     private static long idCount = 0;
     public final long id = idCount;
@@ -24,7 +25,12 @@ public class Zombie {
     private static final boolean debugPath = false;
     private SimplexNoise noise;
     private float dmg;
+    private static ArrayDeque<Long> killTimes = new ArrayDeque<Long>();
+    private static long killWait = 3000;
 
+    public static ArrayDeque<Long> getKillTimes() { return killTimes; }
+    public static long getKillWait() { return killWait; }
+    public static void setKillWait(long k) { killWait = k; }
     public float getDmg() { return dmg; }
     public Zombie(float x, float y, float dmg, JPS jps) {
         dims = new Circle(x, y, Zombie.radius);

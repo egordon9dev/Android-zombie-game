@@ -2,6 +2,7 @@ package com.example.ethan.siege;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -21,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayDeque;
@@ -44,6 +46,9 @@ public class GameView extends SurfaceView implements Runnable {
     private int activePtrId = -1;
     private JPS jps;
     private float camResponse = 0.05f;
+    private int round, roundKills;
+    private long roundChangeT;
+    private boolean roundChangeAnim;
     //settings
     private static final String ctrlMode_tapAnywhere = "Tap Anywhere";
     private static final String ctrlMode_joystick = "Joystick";
@@ -52,6 +57,7 @@ public class GameView extends SurfaceView implements Runnable {
     public void setPaused(boolean b) { paused = b; }
     // map scale / node space
     public static final int nsFac = 1;
+    private SharedPreferences prefs;
     public GameView(Context ctx, float w, float h) {
         super(ctx);
         width = w;
@@ -61,6 +67,7 @@ public class GameView extends SurfaceView implements Runnable {
         paint = new Paint();
         joyX0 = width - 400;
         joyY0 = height - 500;
+        prefs = ctx.getSharedPreferences("com.example.ethan.siege", Context.MODE_PRIVATE);
         startGame();
     }
 
@@ -109,7 +116,7 @@ public class GameView extends SurfaceView implements Runnable {
             }
         }
         int i = 0, spawnW = x1-x0, spawnH = y1-y0;
-        while(Zombie.nZombies > zombies.size() + killT.size() || (killT.size() > 0 && System.currentTimeMillis() - killT.getFirst().longValue() > Zombie.getKillWait())) {
+        while((Zombie.getnZombies() > zombies.size() + killT.size() || (killT.size() > 0 && System.currentTimeMillis() - killT.getFirst().longValue() > Zombie.getKillWait())) && roundKills - player.getKills() > zombies.size()){
 
             float zx = 0f, zy = 0f;
             if(xDom) {
@@ -163,9 +170,19 @@ public class GameView extends SurfaceView implements Runnable {
                     bullets.remove(b);
                     zombies.remove(z);
                     killT.addLast(System.currentTimeMillis());
+                    player.setKills(player.getKills() + 1);
                     player.setPts(player.getPts() + player.getPtsPerKill());
                 }
             }
+        }
+        if(player.getKills() >= roundKills) {
+            if(roundChangeT < 0) roundChangeT = System.currentTimeMillis();
+            if(System.currentTimeMillis() - roundChangeT > 2500) {
+                roundChangeAnim = false;
+                roundChangeT = -1;
+                round++;
+                roundKills = (int)(3 * Math.pow(3, round-1)) + (int)((Math.random()-0.5)*3);
+            } else roundChangeAnim = true;
         }
         long dt = System.currentTimeMillis() - prevUpdateT;
         if(dt > 1000) dt = 0;
@@ -214,12 +231,18 @@ public class GameView extends SurfaceView implements Runnable {
                         canvas.drawCircle(px, py, 120, paint);
                     }
 
-                    paint.setColor(0xBBBB3333);//0xBB3333
+                    paint.setColor(0xBBBB3333);
                     paint.setTextSize(90);
                     paint.setTypeface(Typeface.create("Arial",Typeface.BOLD));
-                    canvas.drawText(context.getString(R.string.score), 50, 90, paint);
+                    canvas.drawText("SCORE", 50, 90, paint);
                     paint.setTextSize(150);
                     canvas.drawText(Integer.toString(player.getPts()), 50, 250, paint);
+                    paint.setTextSize(90);
+                    canvas.drawText("ROUND", 50, 340, paint);
+                    paint.setTextSize(150);
+                    if(roundChangeAnim && ((System.currentTimeMillis()-roundChangeT)/300) % 2 == 0) paint.setColor(0xFFFFFFFF);
+                    canvas.drawText(Integer.toString(round), 50, 500, paint);
+
 
 /*
                     paint.setColor(Color.WHITE);
@@ -250,21 +273,28 @@ public class GameView extends SurfaceView implements Runnable {
         }
         Game.window.dismiss();
     }
-    public void goHome() {
+    public void goHome(View view) {
         dismissWindow();
         Intent intent = new Intent(context, MainActivity.class);
         context.startActivity(intent);
     }
-    public void resumeGame() {
+    public void resumeGame(View view) {
         dismissWindow();
         paused = false;
     }
-    public void restartGame() {
+    public void restartGame(View view) {
         dismissWindow();
         startGame();
     }
+    public void goPaused(View view) {
+        if(Game.window != null) Game.window.dismiss();
+        paused = true;
+        showPopup(R.layout.paused);
+        TextView playerText = (TextView)Game.inflatedView.findViewById(R.id.playerText);
+        playerText.setText(player.toString());
+    }
     private Spinner ctrlOps;
-    public void goSettings() {
+    public void goSettings(View view) {
         dismissWindow();
         showPopup(R.layout.settings);
         ctrlOps = (Spinner)Game.inflatedView.findViewById(R.id.ctrlOpsSpinner);
@@ -277,6 +307,10 @@ public class GameView extends SurfaceView implements Runnable {
                 @Override
                 public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
                     ctrlMode = (String)ctrlOps.getSelectedItem();
+                    if(ctrlMode.equals(ctrlMode_joystick)) {
+                        px = joyX0;
+                        py = joyY0;
+                    }
                 }
                 @Override
                 public void onNothingSelected(AdapterView<?> arg0) {
@@ -298,6 +332,9 @@ public class GameView extends SurfaceView implements Runnable {
         };
         this.post(runnable);
     }
+    public int getHighScore() {
+        return player.getHighScore();
+    }
     public void run() {
         while (running) {
             if (Thread.currentThread().isInterrupted()) {
@@ -305,6 +342,15 @@ public class GameView extends SurfaceView implements Runnable {
                 break;
             }
             if(!paused && player.getHealth() <= 0.0f) {
+                int pts = player.getPts();
+                if(pts > player.getHighScore()) {
+                    player.setHighSchore(pts);
+                    prefs.edit().putInt("highScore", pts).apply();
+                }
+                if(round > player.getHighestRound()) {
+                    player.setHighestRound(round);
+                    prefs.edit().putInt("highestRound", round).apply();
+                }
                 paused = true;
                 showPopup(R.layout.game_over);
             }
@@ -331,10 +377,14 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void startGame() {
-        prevUpdateT = 0;
+        roundChangeT = System.currentTimeMillis();
+        prevUpdateT = 0L;
+        round = 0;
+        roundKills = 0;
+        roundChangeAnim = false;
         running = true;
         paused = false;
-        prevT = 0;
+        prevT = 0L;
         px = joyX0;
         py = joyY0;
         player = new Player(100);
@@ -347,6 +397,7 @@ public class GameView extends SurfaceView implements Runnable {
         jps = new JPS(tiles[0].length*nsFac, tiles.length*nsFac, (int)(Map.sc/nsFac));
         bullets = new ArrayList<Bullet>();
         zombies = new ArrayList<Zombie>();
+        Zombie.resetStatics();
         player.respawn(map, cam);
         ArrayDeque<Long> killT = Zombie.getKillTimes();
     }

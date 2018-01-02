@@ -13,25 +13,32 @@ public class Zombie {
     private Circle dims;
     private float xv, yv;
     private long prevT;
-    public static final float avgSpeed = 0.3f;
     public final float speed;
-    public static final int nZombies = 30;
-    public static final float radius = 40.0f;
-    private static long idCount = 0;
-    public final long id = idCount;
     JPS jps;
     private int startX, startY, endX, endY;
     ArrayList<Node> path;
-    private static final boolean debugPath = false;
     private SimplexNoise noise;
     private float dmg;
+    public float getDmg() { return dmg; }
+    private static long idCount = 0;
+    public final long id = idCount;
+
+    private static final boolean debugPath = false;
+    public static final float avgSpeed = 0.3f;
+    public static final float radius = 40.0f;
     private static ArrayDeque<Long> killTimes = new ArrayDeque<Long>();
     private static long killWait = 3000;
-
+    private static int nZombies = 10;
+    public static int getnZombies() { return nZombies; }
+    public static void setnZombie(int n) { nZombies = n; }
     public static ArrayDeque<Long> getKillTimes() { return killTimes; }
     public static long getKillWait() { return killWait; }
     public static void setKillWait(long k) { killWait = k; }
-    public float getDmg() { return dmg; }
+    public static void resetStatics() {
+        killWait = 3000;
+        killTimes = new ArrayDeque<Long>();
+        nZombies = 10;
+    }
     public Zombie(float x, float y, float dmg, JPS jps) {
         dims = new Circle(x, y, Zombie.radius);
         speed = avgSpeed * (float)(0.5 + Math.random());

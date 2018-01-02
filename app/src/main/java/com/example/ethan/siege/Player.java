@@ -22,7 +22,37 @@ public class Player {
     private int pts, ptsPerKill;
     public static final float regenRate = 0.003f;
     private float health, maxHealth;
+    private int kills;
+    private static final int chargeAmt = 300;
+    private static int highScore = 0, highestRound = 0;
 
+    public int getKills() { return kills; }
+    public void setKills(int kills) { this.kills = kills; }
+    public float getMaxHealth() { return maxHealth; }
+    public float getHealth() { return health; }
+    public void setHealth(float health) { this.health = health; }
+    public int getPtsPerKill() { return ptsPerKill; }
+    public void setPts(int pts) { this.pts = pts; }
+    public int getPts() { return pts; }
+    public void setMoving(boolean b) { moving = b; }
+    public boolean getCharged() { return charged; }
+    public void setCharged(boolean b) { charged = b; }
+    public long getChargeT0() { return chargeT0; }
+    public void setChargeT0(long t0) { chargeT0 = t0; }
+    public Circle getDims() {
+        return dims;
+    }
+    public Point getDir() { return dir; }
+    public void setXV(float xv) {
+        this.xv = xv;
+    }
+    public void setYV(float yv) {
+        this.yv = yv;
+    }
+    public static int getHighScore() { return highScore; }
+    public static void setHighSchore(int n) { highScore = n; }
+    public static int getHighestRound() { return highestRound; }
+    public static void setHighestRound(int n) { highestRound = n; }
     public Player(float maxHealth) {
         dims = new Circle(150.0f, 150.0f, 90.0f);
         xv = 0.0f;
@@ -35,10 +65,15 @@ public class Player {
         ptsPerKill = 1;
         this.maxHealth = maxHealth;
         health = maxHealth;
+        kills = 0;
+    }
+    @Override
+    public String toString() {
+        return "Score     " + pts + "\nKills     " + kills;
     }
 
     public void update(Tile[][] tiles) {
-        if(System.currentTimeMillis() - chargeT0 > 100) {
+        if(System.currentTimeMillis() - chargeT0 > chargeAmt) {
             charged = true;
         }
 
@@ -132,13 +167,13 @@ public class Player {
             map.update(cam.x, cam.y);
 
             int top = (int) ((dims.y - dims.r - tiles[0][0].y) / sc);
-            if(top < 0) top = 0;
+            if (top < 0) top = 0;
             int bottom = (int) ((dims.y + dims.r - tiles[0][0].y) / sc);
-            if(bottom > tiles.length - 1) bottom = tiles.length - 1;
+            if (bottom > tiles.length - 1) bottom = tiles.length - 1;
             int left = (int) ((dims.x - dims.r - tiles[0][0].x) / sc);
-            if(left < 0) left = 0;
+            if (left < 0) left = 0;
             int right = (int) ((dims.x + dims.r - tiles[0][0].x) / sc);
-            if(right > tiles[0].length - 1) right = tiles[0].length - 1;
+            if (right > tiles[0].length - 1) right = tiles[0].length - 1;
             for (int y = top; y <= bottom; y++) {
                 for (int x = left; x <= right; x++) {
                     if (GameView.checkCol(tiles[y][x], dims)) {
@@ -148,27 +183,5 @@ public class Player {
             }
             break;
         }
-    }
-    public float getMaxHealth() { return maxHealth; }
-    public float getHealth() { return health; }
-    public void setHealth(float health) { this.health = health; }
-    public int getPtsPerKill() { return ptsPerKill; }
-    public void setPts(int pts) { this.pts = pts; }
-    public int getPts() { return pts; }
-    public void setMoving(boolean b) { moving = b; }
-    public boolean getCharged() { return charged; }
-    public void setCharged(boolean b) { charged = b; }
-    public long getChargeT0() { return chargeT0; }
-    public void setChargeT0(long t0) { chargeT0 = t0; }
-    public Circle getDims() {
-        return dims;
-    }
-    public Point getDir() { return dir; }
-    public void setXV(float xv) {
-        this.xv = xv;
-    }
-
-    public void setYV(float yv) {
-        this.yv = yv;
     }
 }

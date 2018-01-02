@@ -1,6 +1,7 @@
 package com.example.ethan.siege;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -18,6 +19,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 public class Game extends Activity {
     private GameView gameView;
@@ -36,7 +38,7 @@ public class Game extends Activity {
         butShoot.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                     case MotionEvent.ACTION_POINTER_DOWN:
                         gameView.player.setChargeT0(System.currentTimeMillis());
@@ -47,11 +49,10 @@ public class Game extends Activity {
                         break;
                 }
                 return true;
-
             }
         });
         butShoot.setText("Shoot");
-        butShoot.setPadding(30, 30, 30, 30);
+        butShoot.setPadding(100, 100, 100, 100);
         butShoot.setTextSize(35);
         int transparentBlue = ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF;
         butShoot.setBackgroundColor(transparentBlue);
@@ -127,22 +128,14 @@ public class Game extends Activity {
         gameView.pause();
     }
     public void restartGame(View view) {
-        gameView.restartGame();
+        gameView.restartGame(view);
     }
-    public void resumeGame(View view) { gameView.resumeGame(); }
+    public void resumeGame(View view) { gameView.resumeGame(view); }
     public void goHome(View view) {
-        gameView.goHome();
+        gameView.goHome(view);
     }
-    public void goSettings(View view) { gameView.goSettings(); }
+    public void goSettings(View view) { gameView.goSettings(view); }
     public void goPaused(View view) {
-        if(window != null) window.dismiss();
-        gameView.setPaused(true);
-        inflatedView = getLayoutInflater().inflate(R.layout.paused, null);
-        window = new PopupWindow(inflatedView, RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT, true);
-        Drawable drawable = new ColorDrawable(Color.BLACK);
-        drawable.setBounds(0, 0, window.getWidth(), window.getHeight());
-        drawable.setAlpha(180);
-        window.setBackgroundDrawable(drawable);
-        window.showAtLocation(gameView, Gravity.NO_GRAVITY, 0, 0);
+        gameView.goPaused(view);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -30,7 +30,7 @@ public class Zombie {
     private static long killWait = 3000;
     private static int nZombies = 10;
     public static int getnZombies() { return nZombies; }
-    public static void setnZombie(int n) { nZombies = n; }
+    public static void setnZombies(int n) { nZombies = n; }
     public static ArrayDeque<Long> getKillTimes() { return killTimes; }
     public static long getKillWait() { return killWait; }
     public static void setKillWait(long k) { killWait = k; }

@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 import java.util.ArrayList;
 import java.util.Comparator;

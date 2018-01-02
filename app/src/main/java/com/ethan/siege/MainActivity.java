@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 import android.app.Activity;
 import android.content.Context;
@@ -19,7 +19,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        prefs = this.getSharedPreferences("com.example.ethan.siege", Context.MODE_PRIVATE);
+        prefs = this.getSharedPreferences("com.ethan.siege", Context.MODE_PRIVATE);
         int highScore = prefs.getInt("highScore", 0);
         TextView tvHighScore = (TextView)this.findViewById(R.id.highScore);
         tvHighScore.setText(Integer.toString(highScore));

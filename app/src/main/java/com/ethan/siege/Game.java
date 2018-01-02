@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 import android.app.Activity;
 import android.content.Context;
@@ -57,7 +57,6 @@ public class Game extends Activity {
         int transparentBlue = ContextCompat.getColor(this, R.color.dark_blue) & 0xAAFFFFFF;
         butShoot.setBackgroundColor(transparentBlue);
         butShoot.setTextColor(ContextCompat.getColor(this, R.color.light_blue) & 0xAAFFFFFF);
-        butShoot.setId(1001);
         /*
         Button butMove = new Button(this);
         butMove.setOnTouchListener(new View.OnTouchListener() {

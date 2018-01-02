@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 import org.junit.Test;
 

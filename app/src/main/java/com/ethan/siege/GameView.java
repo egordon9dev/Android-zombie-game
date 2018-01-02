@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 import android.content.Context;
 import android.content.Intent;
@@ -67,7 +67,7 @@ public class GameView extends SurfaceView implements Runnable {
         paint = new Paint();
         joyX0 = width - 400;
         joyY0 = height - 500;
-        prefs = ctx.getSharedPreferences("com.example.ethan.siege", Context.MODE_PRIVATE);
+        prefs = ctx.getSharedPreferences("com.ethan.siege", Context.MODE_PRIVATE);
         startGame();
     }
 
@@ -182,6 +182,7 @@ public class GameView extends SurfaceView implements Runnable {
                 roundChangeT = -1;
                 round++;
                 roundKills = (int)(3 * Math.pow(3, round-1)) + (int)((Math.random()-0.5)*3);
+                Zombie.setnZombies(7*round);
             } else roundChangeAnim = true;
         }
         long dt = System.currentTimeMillis() - prevUpdateT;
@@ -195,6 +196,7 @@ public class GameView extends SurfaceView implements Runnable {
         map.update(cam.x, cam.y);
     }
     public static boolean checkCol(Tile t, Circle c) {
+        if(t == null || c == null) return false;
         float left = t.x - c.x;
         float right = c.x - (t.x + t.sc);
         float top = t.y - c.y;
@@ -344,10 +346,14 @@ public class GameView extends SurfaceView implements Runnable {
             if(!paused && player.getHealth() <= 0.0f) {
                 int pts = player.getPts();
                 if(pts > player.getHighScore()) {
+                    int n = prefs.getInt("highScore", 0);
+                    if(n > pts) pts = n;
                     player.setHighSchore(pts);
                     prefs.edit().putInt("highScore", pts).apply();
                 }
                 if(round > player.getHighestRound()) {
+                    int n = prefs.getInt("highestRound", 0);
+                    if(n > round) round = n;
                     player.setHighestRound(round);
                     prefs.edit().putInt("highestRound", round).apply();
                 }

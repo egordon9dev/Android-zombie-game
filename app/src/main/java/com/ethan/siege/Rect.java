@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 public class Rect {
     public float x, y, w, h;
     public Rect(float x, float y, float w, float h) {

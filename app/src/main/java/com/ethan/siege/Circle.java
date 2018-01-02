@@ -1,4 +1,4 @@
-package com.example.ethan.siege;
+package com.ethan.siege;
 
 /**
  * Created by Ethan on 12/22/2017.

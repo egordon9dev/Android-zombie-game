@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Android-zombie-game.iml" filepath="$PROJECT_DIR$/.idea/modules/Android-zombie-game.iml" group="Android-zombie-game" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Android-zombie-game-app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Android-zombie-game-app.iml" group="Android-zombie-game/app" />
       <module fileurl="file://$PROJECT_DIR$/Siege.iml" filepath="$PROJECT_DIR$/Siege.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
